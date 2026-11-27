@@ -1,11 +1,11 @@
 {
-    "name": "smart_environment_dashboard",
-    "short_name": "smart_environment_dashboard",
+    "name": "Smart Environment IoT",
+    "short_name": "Smart Environment",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B1220",
+    "theme_color": "#0B1220",
+    "description": "Dashboard meteorológico con datos reales de Open-Meteo.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

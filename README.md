@@ -1,45 +1,114 @@
-# Actividad 3 - Smart-Environment IoT
+# Smart-Environment IoT — Dashboard Flutter
 
-Dashboard Flutter de datos ambientales **simulados** en tiempo real. No requiere sensores ni conexión a servidores en la demostración. Se utiliza `StreamController`, `Timer.periodic` cada 1 s, `StreamBuilder` y `fl_chart`.
+Dashboard Flutter para visualizar información meteorológica real de Chihuahua, México, mediante la API REST de **Open-Meteo**.
 
-## Instalar desde PowerShell en Windows
+## Funcionalidades
 
-> El ZIP contiene `lib/`, `test/` y `pubspec.yaml`. Los directorios de plataforma Android, Windows y Web se generan con el Flutter SDK.
+- Consulta HTTP GET a `https://api.open-meteo.com/v1/forecast`.
+- Temperatura, humedad relativa, sensación térmica, velocidad y dirección del viento, precipitación y código meteorológico.
+- Pronóstico horario para las próximas 24 horas.
+- Gráficas de temperatura y humedad alimentadas con la respuesta horaria de la API.
+- Actualización manual y automática cada 15 minutos.
+- Estados de conexión, carga y error.
+- Conservación de la última respuesta correcta cuando falla una actualización.
+- Pruebas unitarias del modelo y del servicio con respuestas HTTP simuladas.
+- Interfaz adaptable a escritorio y móvil.
+
+## Ubicación inicial
+
+- Ciudad: Chihuahua, México.
+- Latitud: `28.6353`.
+- Longitud: `-106.0889`.
+- Zona horaria: `auto`.
+
+La ubicación se puede cambiar en `lib/services/open_meteo_service.dart`, modificando los valores predeterminados de `latitude` y `longitude` al crear `OpenMeteoService`.
+
+## Variables consultadas
+
+**Datos actuales (`current`):**
+
+- `temperature_2m`
+- `relative_humidity_2m`
+- `apparent_temperature`
+- `precipitation`
+- `wind_speed_10m`
+- `wind_direction_10m`
+- `weather_code`
+
+**Pronóstico horario (`hourly`):**
+
+- `temperature_2m`
+- `relative_humidity_2m`
+- `wind_speed_10m`
+- `precipitation`
+
+La consulta utiliza grados Celsius, kilómetros por hora, milímetros y la zona horaria automática. No requiere API Key.
+
+## Arquitectura
+
+```text
+lib/
+├── main.dart
+├── models/
+│   └── weather_data.dart
+└── services/
+    ├── open_meteo_service.dart
+    └── weather_dashboard_controller.dart
+
+test/
+├── widget_test.dart
+├── weather_data_test.dart
+└── open_meteo_service_test.dart
+```
+
+- `WeatherData`: interpreta y valida la respuesta JSON.
+- `OpenMeteoService`: construye la solicitud HTTP, consulta Open-Meteo y gestiona respuestas inválidas.
+- `WeatherDashboardController`: administra el estado, el `StreamController`, la actualización manual y el temporizador de 15 minutos.
+- `DashboardScreen`: presenta las métricas y las gráficas mediante `StreamBuilder` y `fl_chart`.
+
+## Instalación y ejecución en Windows
+
+Abre PowerShell en la carpeta del proyecto y ejecuta:
 
 ```powershell
-cd "$HOME\Proyectos"
-# Extrae el ZIP aquí y entra en la carpeta
-cd .\smart_environment_dashboard
-flutter create --project-name smart_environment_dashboard --platforms android,web,windows .
 flutter pub get
 flutter analyze
 flutter test
-flutter devices
 flutter run -d chrome
 ```
 
-Para un Android conectado por USB y con depuración habilitada: `flutter run -d <id_dispositivo>` (obtener ID con `flutter devices`).
+Para compilar la versión web:
 
-## Para presentar al docente
-
-1. Mostrar las 3 tarjetas de telemetría (temperatura, humedad y CO₂ referencial/aire en ppm).
-2. Indicar que los datos se producen cada segundo por `Timer.periodic` y viajan por un Stream a `StreamBuilder`.
-3. Demostrar las líneas animadas y tocar puntos para mostrar su valor.
-4. Pulsar **Pausar** y **Reanudar** para probar interactividad.
-5. Explicar el origen simulado y cómo se sustituirá por las lecturas del ESP32 (no afirmar que sean datos físicos reales).
-
-## Esquema previsto para integrar ESP32
-
-```json
-{"temperature": 25.4, "humidity": 58.2, "airPpm": 706, "deviceId": "ESP32-01"}
+```powershell
+flutter build web
 ```
 
-La fuente actual es `SimulatedSensorService` en `lib/main.dart`. Para conectarlo a ThingsBoard o MQTT se debe implementar un origen real que emita `DashboardData` con el mismo tipo de lectura. La integración a un backend real NO está incluida.
+Para comprobar los dispositivos disponibles:
 
-## Rúbrica
+```powershell
+flutter devices
+```
 
-- Graficación (40): 2 LineCharts con leyendas, ejes, tooltips y animación.
-- Flujo real (40): `StreamController` + `Timer.periodic` + `StreamBuilder`; no exige refresco manual.
-- Integración (20): modelo ambiental (`temperature`, `humidity`, `airPpm`) y dispositivo `ESP32-01`, actualmente simulado.
+La aplicación Android necesita permiso de Internet, ya incluido en `android/app/src/main/AndroidManifest.xml`.
 
-**Nota:** las alertas y los valores son demostrativos y no deben interpretarse como mediciones de seguridad ambiental ni concentraciones calibradas de CO₂.
+## Pruebas
+
+Las pruebas cubren:
+
+- Interpretación de valores actuales y horarios.
+- Validación de campos obligatorios.
+- Solicitud GET y parámetros de ubicación.
+- Respuestas HTTP no exitosas.
+- Respuestas JSON inválidas.
+- Presentación de las métricas en la interfaz.
+
+## Alcance y limitaciones de los datos
+
+Open-Meteo proporciona datos meteorológicos y pronósticos para las coordenadas solicitadas. **No proporciona mediciones de CO₂, calidad del aire ni lecturas de un ESP32** mediante este endpoint. Por ese motivo, el Dashboard ya no presenta una tarjeta `airPpm` como si fuera una medición real; ahora muestra precipitación.
+
+Los datos de la API no deben confundirse con mediciones físicas tomadas dentro de un edificio. Para monitoreo real de CO₂, partículas u otros contaminantes se necesitará un sensor adecuado y una fuente de datos independiente.
+
+## Fuente
+
+- Open-Meteo: <https://open-meteo.com/en/docs>
+- Endpoint: <https://api.open-meteo.com/v1/forecast>
